@@ -91,7 +91,7 @@ export default function Admin() {
       {/* HEADER */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
         <h1 style={{ color:"#111", fontWeight:"bold" }}>
-          📊 Painel Admin
+          📊 Painel Administrativo
         </h1>
 
         <button onClick={logout}

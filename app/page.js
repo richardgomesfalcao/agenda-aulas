@@ -91,7 +91,7 @@ export default function Home() {
 
       {/* HEADER */}
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <h1>📅 Agenda de Aulas</h1>
+        <h1>📅 Agenda de Aulas Online</h1>
 
         <div style={{ display: "flex", gap: "10px" }}>
           <Link href="/login">
