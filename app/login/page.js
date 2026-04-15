@@ -9,24 +9,21 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [erro, setErro] = useState("");
-  const [loading, setLoading] = useState(false);
   const [mostrarSenha, setMostrarSenha] = useState(false);
-  const [animando, setAnimando] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [dark, setDark] = useState(true);
 
   const router = useRouter();
 
-  // 🧠 carregar preferências
+  // 🧠 lembrar usuário
   useEffect(() => {
+    const savedEmail = localStorage.getItem("email");
     const tema = localStorage.getItem("tema");
-    const emailSalvo = localStorage.getItem("email");
 
+    if (savedEmail) setEmail(savedEmail);
     if (tema === "light") setDark(false);
-    if (emailSalvo) setEmail(emailSalvo);
   }, []);
 
-  // 🔄 alternar tema
   function toggleTema() {
     const novo = !dark;
     setDark(novo);
@@ -34,7 +31,6 @@ export default function Login() {
   }
 
   async function login() {
-    setErro("");
     setLoading(true);
 
     try {
@@ -42,47 +38,43 @@ export default function Login() {
 
       localStorage.setItem("email", email);
 
-      setAnimando(true);
-
+      // 🔒 animação leve antes de entrar
       setTimeout(() => {
         router.push("/admin");
-      }, 700);
+      }, 500);
 
-    } catch (e) {
-      setErro("Email ou senha inválidos");
+    } catch (err) {
+      alert("Erro ao fazer login");
       setLoading(false);
     }
   }
 
-  // 🎨 cores dinâmicas
   const bg = dark
-    ? "linear-gradient(135deg, #1e293b, #0f172a)"
-    : "linear-gradient(135deg, #e2e8f0, #cbd5f5)";
+    ? "linear-gradient(135deg, #0f172a, #1e293b)"
+    : "#f4f6f9";
 
-  const cardBg = dark ? "#111827" : "#ffffff";
-  const text = dark ? "#f9fafb" : "#111827";
-  const inputBg = dark ? "#1f2937" : "#fff";
+  const card = dark ? "#1e293b" : "#fff";
+  const text = dark ? "#fff" : "#111";
+  const inputBg = dark ? "#334155" : "#f1f5f9";
 
   return (
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: bg,
-        padding: "15px"
-      }}
-    >
-      {/* 🌙 BOTÃO TEMA */}
+    <div style={{
+      height: "100vh",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      background: bg
+    }}>
+
+      {/* 🌙 botão tema */}
       <button
         onClick={toggleTema}
         style={{
           position: "absolute",
-          top: "20px",
-          right: "20px",
-          padding: "8px 12px",
-          borderRadius: "8px",
+          top: 20,
+          right: 20,
+          padding: "6px 10px",
+          borderRadius: "6px",
           border: "none",
           cursor: "pointer"
         }}
@@ -91,27 +83,18 @@ export default function Login() {
       </button>
 
       {/* CARD */}
-      <div
-        style={{
-          background: cardBg,
-          padding: "30px",
-          borderRadius: "12px",
-          width: "100%",
-          maxWidth: "350px",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-          transform: animando ? "scale(0.95)" : "scale(1)",
-          opacity: animando ? 0.5 : 1,
-          transition: "0.4s"
-        }}
-      >
-        <h2
-          style={{
-            textAlign: "center",
-            marginBottom: "20px",
-            color: text
-          }}
-        >
-          🔐 Login Admin
+      <div style={{
+        background: card,
+        padding: "30px",
+        borderRadius: "12px",
+        width: "320px",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+        color: text,
+        transition: "0.3s"
+      }}>
+
+        <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
+          🔐 Login Administrativo
         </h2>
 
         {/* EMAIL */}
@@ -119,13 +102,13 @@ export default function Login() {
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e)=>setEmail(e.target.value)}
           style={{
             width: "100%",
-            padding: "12px",
-            marginBottom: "12px",
-            borderRadius: "8px",
-            border: "1px solid #ccc",
+            padding: "10px",
+            marginBottom: "10px",
+            borderRadius: "6px",
+            border: "none",
             background: inputBg,
             color: text
           }}
@@ -137,44 +120,29 @@ export default function Login() {
             type={mostrarSenha ? "text" : "password"}
             placeholder="Senha"
             value={senha}
-            onChange={(e) => setSenha(e.target.value)}
+            onChange={(e)=>setSenha(e.target.value)}
             style={{
               width: "100%",
-              padding: "12px",
-              marginBottom: "15px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
+              padding: "10px",
+              borderRadius: "6px",
+              border: "none",
               background: inputBg,
               color: text
             }}
           />
 
           <span
-            onClick={() => setMostrarSenha(!mostrarSenha)}
+            onClick={()=>setMostrarSenha(!mostrarSenha)}
             style={{
               position: "absolute",
-              right: "10px",
-              top: "12px",
+              right: 10,
+              top: 10,
               cursor: "pointer"
             }}
           >
-            {mostrarSenha ? "🙈" : "👁️"}
+            👁️
           </span>
         </div>
-
-        {/* ERRO */}
-        {erro && (
-          <div
-            style={{
-              color: "#ef4444",
-              marginBottom: "10px",
-              fontSize: "13px",
-              textAlign: "center"
-            }}
-          >
-            {erro}
-          </div>
-        )}
 
         {/* BOTÃO */}
         <button
@@ -182,18 +150,31 @@ export default function Login() {
           disabled={loading}
           style={{
             width: "100%",
-            padding: "12px",
-            background: loading ? "#93c5fd" : "#2563eb",
-            color: "#fff",
+            marginTop: "15px",
+            padding: "10px",
+            borderRadius: "6px",
             border: "none",
-            borderRadius: "8px",
-            cursor: loading ? "not-allowed" : "pointer",
-            fontWeight: "bold"
+            background: "#2563eb",
+            color: "#fff",
+            fontWeight: "bold",
+            cursor: "pointer"
           }}
         >
           {loading ? "Entrando..." : "Entrar"}
         </button>
+
+        {/* DEMO DISCRETO */}
+        <p style={{
+          marginTop: "15px",
+          fontSize: "12px",
+          opacity: 0.7,
+          textAlign: "center"
+        }}>
+          Demo: teste@agenda.com / 123456
+        </p>
+
       </div>
+
     </div>
   );
 }

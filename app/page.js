@@ -94,8 +94,21 @@ export default function Home() {
         <h1>📅 Agenda de Aulas Online</h1>
 
         <div style={{ display: "flex", gap: "10px" }}>
-          <Link href="/login">
-            <span style={{ cursor: "pointer" }}>👨‍🏫 Professor</span>
+          <Link href="/login" style={{ textDecoration: "none" }}>
+            <div
+              style={{
+                backgroundColor: "#2563eb",
+                color: "#fff",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontWeight: "bold",
+                fontSize: "14px",
+                display: "inline-block"
+              }}
+            >
+              Área do Professor
+            </div>
           </Link>
 
           <button onClick={toggleTema}>
@@ -185,6 +198,9 @@ export default function Home() {
             color: "#111"
           }}>
             <h3>Agendar aula</h3>
+            <p style={{ marginBottom: "10px", fontWeight: "bold" }}>
+              {modal.dia.charAt(0).toUpperCase() + modal.dia.slice(1)} - {modal.horario}
+            </p>
 
             <input
               placeholder="Seu nome"
