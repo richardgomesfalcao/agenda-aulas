@@ -2,13 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { db, auth } from "../../lib/firebase";
-import {
-    collection,
-    getDocs,
-    doc,
-    setDoc,
-    deleteDoc
-} from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
@@ -19,6 +13,8 @@ export default function Admin() {
     const [tipo, setTipo] = useState("turma");
     const [nomes, setNomes] = useState("");
     const [dark, setDark] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(null);
 
     const [isMobile, setIsMobile] = useState(false);
     const [diaSelecionado, setDiaSelecionado] = useState("segunda");
@@ -56,6 +52,8 @@ export default function Admin() {
     }
 
     async function salvar() {
+        setLoading(true);
+
         const { dia, horario } = modal;
         const id = `${dia}-${horario}`;
 
@@ -73,6 +71,8 @@ export default function Admin() {
         setModal(null);
         setNomes("");
         buscar();
+
+        setLoading(false);
     }
 
     async function excluir(id) {
@@ -265,7 +265,7 @@ export default function Admin() {
                                             </button>
 
                                             <button
-                                                onClick={() => excluir(id)}
+                                                onClick={() => setConfirmDelete(id)}
                                                 style={{
                                                     flex: 1,
                                                     background: "#111",
@@ -404,7 +404,7 @@ export default function Admin() {
                                                     </button>
 
                                                     <button
-                                                        onClick={() => excluir(`${dia}-${horario}`)}
+                                                        onClick={() => setConfirmDelete(`${dia}-${horario}`)}
                                                         style={{
                                                             flex: 1,
                                                             background: "#111",
@@ -491,18 +491,19 @@ export default function Admin() {
                         <div style={{ display: "flex", gap: "8px" }}>
                             <button
                                 onClick={salvar}
+                                disabled={loading}
                                 style={{
                                     flex: 1,
-                                    background: "#2563eb",
+                                    background: loading ? "#93c5fd" : "#2563eb",
                                     color: "#fff",
                                     border: "none",
                                     padding: "10px",
                                     borderRadius: "8px",
                                     fontWeight: "bold",
-                                    cursor: "pointer"
+                                    cursor: loading ? "not-allowed" : "pointer"
                                 }}
                             >
-                                Salvar
+                                {loading ? "Salvando..." : "Salvar"}
                             </button>
 
                             <button
@@ -522,7 +523,66 @@ export default function Admin() {
                     </div>
                 </div>
             )}
+            {confirmDelete && (
+                <div style={{
+                    position: "fixed",
+                    inset: 0,
+                    background: "rgba(0,0,0,0.6)",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    zIndex: 999
+                }}>
+                    <div style={{
+                        background: "#0f172a",
+                        padding: "20px",
+                        borderRadius: "12px",
+                        width: "300px",
+                        textAlign: "center",
+                        color: "#111"
+                    }}>
+                        <h3 style={{ fontSize: "18px", opacity: 0.7, color: "#fff" }}>Excluir horário?</h3>
+                        <p style={{ fontSize: "14px", opacity: 0.7, color: "#fff", }}>
+                            Essa ação não pode ser desfeita.
+                        </p>
 
+                        <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
+                            <button
+                                onClick={() => {
+                                    excluir(confirmDelete);
+                                    setConfirmDelete(null);
+                                }}
+                                style={{
+                                    flex: 1,
+                                    background: "#dc2626",
+                                    color: "#fff",
+                                    border: "none",
+                                    padding: "10px",
+                                    borderRadius: "8px",
+                                    fontWeight: "bold",
+                                    cursor: "pointer"
+                                }}
+                            >
+                                Excluir
+                            </button>
+
+                            <button
+                                onClick={() => setConfirmDelete(null)}
+                                style={{
+                                    flex: 1,
+                                    background: "#727272ff",
+                                    border: "none",
+                                    padding: "10px",
+                                    borderRadius: "8px",
+                                    cursor: "pointer"
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
