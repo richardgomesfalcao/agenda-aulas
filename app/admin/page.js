@@ -3,269 +3,526 @@
 import { useEffect, useState } from "react";
 import { db, auth } from "../../lib/firebase";
 import {
-  collection,
-  getDocs,
-  doc,
-  setDoc,
-  deleteDoc
+    collection,
+    getDocs,
+    doc,
+    setDoc,
+    deleteDoc
 } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
 export default function Admin() {
 
-  const [agendamentos, setAgendamentos] = useState({});
-  const [modal, setModal] = useState(null);
-  const [tipo, setTipo] = useState("turma");
-  const [nomes, setNomes] = useState("");
+    const [agendamentos, setAgendamentos] = useState({});
+    const [modal, setModal] = useState(null);
+    const [tipo, setTipo] = useState("turma");
+    const [nomes, setNomes] = useState("");
+    const [dark, setDark] = useState(true);
 
-  const router = useRouter();
+    const [isMobile, setIsMobile] = useState(false);
+    const [diaSelecionado, setDiaSelecionado] = useState("segunda");
 
-  const dias = ["segunda","terca","quarta","quinta","sexta"];
+    const router = useRouter();
 
-  function gerarHorarios() {
-    let arr = [];
-    for (let h = 7; h <= 21; h++) arr.push(`${h}:00`);
-    return arr;
-  }
+    const dias = ["segunda", "terca", "quarta", "quinta", "sexta"];
+    const horarios = Array.from({ length: 15 }, (_, i) => `${7 + i}:00`);
 
-  const horarios = gerarHorarios();
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth < 768);
+        check();
+        window.addEventListener("resize", check);
 
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (!user) router.push("/login");
-      else buscar();
-    });
-    return () => unsub();
-  }, []);
+        const unsub = onAuthStateChanged(auth, (user) => {
+            if (!user) router.push("/login");
+            else buscar();
+        });
 
-  async function buscar() {
-    const snap = await getDocs(collection(db, "agendamentos"));
-    const mapa = {};
-    snap.forEach(doc => mapa[doc.id] = doc.data());
-    setAgendamentos(mapa);
-  }
+        return () => {
+            window.removeEventListener("resize", check);
+            unsub();
+        };
+    }, []);
 
-  async function salvar() {
-    const { dia, horario } = modal;
-    const id = `${dia}-${horario}`;
-
-    let data = {
-      dia,
-      horario,
-      tipo,
-      criadoEm: new Date()
-    };
-
-    if (tipo === "turma") {
-      data.alunos = nomes.split(",").map(n => n.trim()).filter(Boolean);
+    function toggleTema() {
+        setDark(!dark);
     }
 
-    if (tipo === "individual") {
-      data.aluno = nomes;
+    async function buscar() {
+        const snap = await getDocs(collection(db, "agendamentos"));
+        const mapa = {};
+        snap.forEach(doc => mapa[doc.id] = doc.data());
+        setAgendamentos(mapa);
     }
 
-    if (tipo === "outros") {
-      data.motivo = nomes;
+    async function salvar() {
+        const { dia, horario } = modal;
+        const id = `${dia}-${horario}`;
+
+        let data = { dia, horario, tipo };
+
+        if (tipo === "turma") {
+            data.alunos = nomes.split(",").map(n => n.trim());
+        }
+
+        if (tipo === "individual") data.aluno = nomes;
+        if (tipo === "outros") data.motivo = nomes;
+
+        await setDoc(doc(db, "agendamentos", id), data);
+
+        setModal(null);
+        setNomes("");
+        buscar();
     }
 
-    await setDoc(doc(db,"agendamentos",id), data);
+    async function excluir(id) {
+        await deleteDoc(doc(db, "agendamentos", id));
+        buscar();
+    }
 
-    setModal(null);
-    setNomes("");
-    buscar();
-  }
+    async function logout() {
+        await signOut(auth);
+    }
 
-  async function excluir(id){
-    await deleteDoc(doc(db,"agendamentos",id));
-    buscar();
-  }
+    const bg = dark ? "#0f172a" : "#f4f6f9";
+    const card = dark ? "#1e293b" : "#fff";
+    const text = dark ? "#fff" : "#111";
 
-  async function logout(){
-    await signOut(auth);
-  }
+    return (
+        <div style={{ background: bg, color: text, minHeight: "100vh", padding: "15px" }}>
 
-  return (
-    <div style={{ background:"#f4f6f9", minHeight:"100vh", padding:"15px" }}>
+            {/* HEADER */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                    <h1>📊 Painel do Professor</h1>
+                    <p style={{ opacity: 0.7 }}>Gerencie sua agenda de aulas</p>
+                </div>
 
-      {/* HEADER */}
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-        <h1 style={{ color:"#111", fontWeight:"bold" }}>
-          📊 Painel Administrativo
-        </h1>
+                <div style={{ display: "flex", gap: "10px" }}>
 
-        <button onClick={logout}
-          style={{ background:"#ef4444", color:"#fff", border:"none", padding:"6px 10px", borderRadius:"6px" }}>
-          Sair
-        </button>
-      </div>
-
-      {/* GRID */}
-      <div style={{ background:"#fff", borderRadius:"10px", marginTop:"10px", overflow:"hidden" }}>
-
-        {/* HEADER */}
-        <div style={{
-          display:"grid",
-          gridTemplateColumns:"80px repeat(5,1fr)",
-          background:"#2f3e4d",
-          color:"#fff",
-          fontWeight:"bold"
-        }}>
-          <div style={{ textAlign:"center", padding:"10px" }}>Hora</div>
-          {["Seg","Ter","Qua","Qui","Sex"].map(d=>(
-            <div key={d} style={{ textAlign:"center", padding:"10px" }}>{d}</div>
-          ))}
-        </div>
-
-        {/* LINHAS */}
-        {horarios.map(horario=>(
-          <div key={horario} style={{ display:"grid", gridTemplateColumns:"80px repeat(5,1fr)" }}>
-
-            {/* HORA */}
-            <div style={{
-              textAlign:"center",
-              padding:"10px",
-              fontWeight:"bold",
-              color:"#111"
-            }}>
-              {horario}
-            </div>
-
-            {dias.map(dia=>{
-              const id = `${dia}-${horario}`;
-              const ag = agendamentos[id];
-
-              return (
-                <div key={id} style={{ border:"1px solid #eee", padding:"6px" }}>
-
-                  {/* LIVRE */}
-                  {!ag && (
+                    {/* TEMA */}
                     <button
-                      onClick={()=>setModal({dia,horario})}
-                      style={{
-                        width:"100%",
-                        background:"#2563eb",
-                        color:"#fff",
-                        border:"none",
-                        padding:"6px",
-                        borderRadius:"6px",
-                        cursor:"pointer"
-                      }}>
-                      Separar horário
+                        onClick={toggleTema}
+                        style={{
+                            width: "40px",
+                            height: "40px",
+                            borderRadius: "50%",
+                            border: "none",
+                            cursor: "pointer",
+                            background: dark ? "#1e293b" : "#e2e8f0",
+                            color: dark ? "#facc15" : "#111",
+                            fontSize: "18px",
+                            transition: "0.2s"
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = "scale(1.1)";
+                            e.currentTarget.style.boxShadow = "0 0 10px rgba(255,255,255,0.2)";
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = "scale(1)";
+                            e.currentTarget.style.boxShadow = "none";
+                        }}
+                    >
+                        {dark ? "☀️" : "🌙"}
                     </button>
-                  )}
 
-                  {/* OCUPADO */}
-                  {ag && (
-                    <div style={{
-                      background: ag.tipo === "outros" ? "#111" : "#ef4444",
-                      color:"#fff",
-                      padding:"6px",
-                      borderRadius:"6px",
-                      fontSize:"12px"
+                    {/* SAIR */}
+                    <button onClick={logout} style={{
+                        background: "#ef4444",
+                        border: "none",
+                        padding: "8px 12px",
+                        borderRadius: "8px",
+                        color: "#fff",
+                        cursor: "pointer"
                     }}>
-
-                      {/* TIPO */}
-                      <div style={{ fontWeight:"bold", marginBottom:"4px" }}>
-                        {ag.tipo === "turma" && "👥 Turma"}
-                        {ag.tipo === "individual" && "👤 Individual"}
-                        {ag.tipo === "outros" && "🚫 Indisponível"}
-                      </div>
-
-                      {/* DADOS */}
-                      {ag.aluno && <div>{ag.aluno}</div>}
-
-                      {ag.alunos?.map((n,i)=>(
-                        <div key={i}>• {n}</div>
-                      ))}
-
-                      {ag.motivo && <div>{ag.motivo}</div>}
-
-                      {/* AÇÕES */}
-                      <div style={{ marginTop:"5px", display:"flex", gap:"5px" }}>
-                        <button
-                          onClick={()=>setModal({dia,horario})}
-                          style={{
-                            flex:1,
-                            background:"#fff",
-                            color:"#000",
-                            border:"none",
-                            borderRadius:"4px",
-                            cursor:"pointer"
-                          }}>
-                          Editar
-                        </button>
-
-                        <button
-                          onClick={()=>excluir(id)}
-                          style={{
-                            flex:1,
-                            background:"#000",
-                            color:"#fff",
-                            border:"none",
-                            borderRadius:"4px",
-                            cursor:"pointer"
-                          }}>
-                          Excluir
-                        </button>
-                      </div>
-
-                    </div>
-                  )}
+                        Sair
+                    </button>
 
                 </div>
-              );
-            })}
-          </div>
-        ))}
-      </div>
+            </div>
 
-      {/* MODAL */}
-      {modal && (
-        <div style={{
-          position:"fixed",
-          inset:0,
-          background:"rgba(0,0,0,0.4)",
-          display:"flex",
-          justifyContent:"center",
-          alignItems:"center"
-        }}>
-          <div style={{
-            background:"#fff",
-            padding:"20px",
-            borderRadius:"10px",
-            width:"300px"
-          }}>
-            <h3 style={{ marginBottom:"10px", color:"#111" }}>
-              Editar horário
-            </h3>
+            {/* ================= MOBILE ================= */}
+            {isMobile && (
+                <>
+                    <div style={{ display: "flex", gap: "6px", margin: "10px 0" }}>
+                        {dias.map(d => (
+                            <button
+                                key={d}
+                                onClick={() => setDiaSelecionado(d)}
+                                style={{
+                                    padding: "8px 12px",
+                                    borderRadius: "20px",
+                                    border: "none",
+                                    background: diaSelecionado === d ? "#2563eb" : "#444",
+                                    color: "#fff",
+                                    fontWeight: "bold",
+                                    cursor: "pointer",
+                                    transition: "0.2s"
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (diaSelecionado !== d) {
+                                        e.currentTarget.style.background = "#555";
+                                        e.currentTarget.style.transform = "scale(1.05)";
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (diaSelecionado !== d) {
+                                        e.currentTarget.style.background = "#444";
+                                        e.currentTarget.style.transform = "scale(1)";
+                                    }
+                                }}
+                            >
+                                {d.slice(0, 3)}
+                            </button>
+                        ))}
+                    </div>
 
-            <select value={tipo} onChange={(e)=>setTipo(e.target.value)} style={{ width:"100%", marginBottom:"10px" }}>
-              <option value="turma">Turma</option>
-              <option value="individual">Individual</option>
-              <option value="outros">Indisponível</option>
-            </select>
+                    {horarios.map(horario => {
+                        const id = `${diaSelecionado}-${horario}`;
+                        const ag = agendamentos[id];
 
-            <input
-              placeholder="Nome(s) ou motivo"
-              value={nomes}
-              onChange={(e)=>setNomes(e.target.value)}
-              style={{ width:"100%", marginBottom:"10px" }}
-            />
+                        return (
+                            <div key={id} style={{
+                                background: card,
+                                padding: "12px",
+                                marginBottom: "10px",
+                                borderRadius: "10px"
+                            }}>
+                                <strong>{horario}</strong>
 
-            <button onClick={salvar}
-              style={{ width:"100%", background:"#2563eb", color:"#fff", border:"none", padding:"8px", borderRadius:"6px" }}>
-              Salvar
-            </button>
+                                {!ag && (
+                                    <button
+                                        onClick={() => setModal({ dia: diaSelecionado, horario })}
+                                        style={{
+                                            width: "100%",
+                                            marginTop: "8px",
+                                            padding: "10px",
+                                            background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+                                            color: "#fff",
+                                            border: "none",
+                                            borderRadius: "8px",
+                                            fontWeight: "bold",
+                                            cursor: "pointer",
+                                            transition: "0.2s"
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.transform = "scale(1.03)";
+                                            e.currentTarget.style.filter = "brightness(1.1)";
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.transform = "scale(1)";
+                                            e.currentTarget.style.filter = "brightness(1)";
+                                        }}
+                                    >
+                                        Separar horário
+                                    </button>
+                                )}
 
-            <button onClick={()=>setModal(null)}
-              style={{ marginTop:"5px", width:"100%" }}>
-              Cancelar
-            </button>
-          </div>
+                                {ag && (
+                                    <div style={{
+                                        marginTop: "8px",
+                                        background: "#dc2626",
+                                        padding: "10px",
+                                        borderRadius: "8px"
+                                    }}>
+                                        <strong>{ag.tipo}</strong>
+                                        <div>{ag.aluno || ag.motivo}</div>
+
+                                        <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+
+                                            <button
+                                                onClick={() => {
+                                                    setModal({ dia: diaSelecionado, horario });
+                                                    setTipo(ag.tipo);
+                                                    setNomes(
+                                                        ag.aluno ||
+                                                        ag.alunos?.join(", ") ||
+                                                        ag.motivo ||
+                                                        ""
+                                                    );
+                                                }}
+                                                style={{
+                                                    flex: 1,
+                                                    background: "#ffffff",
+                                                    color: "#111",
+                                                    border: "none",
+                                                    padding: "10px",
+                                                    borderRadius: "8px",
+                                                    fontWeight: "bold",
+                                                    cursor: "pointer",
+                                                    transition: "0.2s"
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.background = "#e5e7eb";
+                                                    e.currentTarget.style.transform = "scale(1.05)";
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.background = "#ffffff";
+                                                    e.currentTarget.style.transform = "scale(1)";
+                                                }}
+                                            >
+                                                Editar
+                                            </button>
+
+                                            <button
+                                                onClick={() => excluir(id)}
+                                                style={{
+                                                    flex: 1,
+                                                    background: "#111",
+                                                    color: "#fff",
+                                                    border: "none",
+                                                    padding: "10px",
+                                                    borderRadius: "8px",
+                                                    fontWeight: "bold",
+                                                    cursor: "pointer",
+                                                    transition: "0.2s"
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.background = "#333";
+                                                    e.currentTarget.style.transform = "scale(1.05)";
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.background = "#111";
+                                                    e.currentTarget.style.transform = "scale(1)";
+                                                }}
+                                            >
+                                                Excluir
+                                            </button>
+
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </>
+            )}
+
+            {/* ================= DESKTOP GRID ================= */}
+            {!isMobile && (
+                <div style={{ marginTop: "20px" }}>
+
+                    {/* HEADER GRID */}
+                    <div style={{
+                        display: "grid",
+                        gridTemplateColumns: "80px repeat(5,1fr)",
+                        background: "#334155",
+                        padding: "10px",
+                        borderRadius: "10px 10px 0 0"
+                    }}>
+                        <div>Hora</div>
+                        <div>Seg</div>
+                        <div>Ter</div>
+                        <div>Qua</div>
+                        <div>Qui</div>
+                        <div>Sex</div>
+                    </div>
+
+                    {horarios.map(horario => (
+                        <div key={horario} style={{
+                            display: "grid",
+                            gridTemplateColumns: "80px repeat(5,1fr)"
+                        }}>
+
+                            <div style={{ padding: "10px" }}>{horario}</div>
+
+                            {dias.map(dia => {
+                                const id = `${dia}-${horario}`;
+                                const ag = agendamentos[id];
+
+                                return (
+                                    <div key={id} style={{
+                                        padding: "6px",
+                                        border: "1px solid #334155"
+                                    }}>
+
+                                        {!ag && (
+                                            <button
+                                                onClick={() => setModal({ dia, horario })} //
+                                                style={{
+                                                    width: "100%",
+                                                    marginTop: "8px",
+                                                    padding: "10px",
+                                                    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+                                                    color: "#fff",
+                                                    border: "none",
+                                                    borderRadius: "8px",
+                                                    fontWeight: "bold",
+                                                    cursor: "pointer",
+                                                    transition: "0.2s"
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.transform = "scale(1.03)";
+                                                    e.currentTarget.style.filter = "brightness(1.1)";
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.transform = "scale(1)";
+                                                    e.currentTarget.style.filter = "brightness(1)";
+                                                }}
+                                            >
+                                                Separar horário
+                                            </button>
+                                        )}
+
+                                        {ag && (
+                                            <div style={{
+                                                background: "#dc2626",
+                                                padding: "6px",
+                                                borderRadius: "6px"
+                                            }}>
+                                                <strong>{ag.tipo}</strong>
+                                                <div>{ag.aluno || ag.motivo}</div>
+
+                                                <div style={{ display: "flex", gap: "6px", marginTop: "6px" }}>
+
+                                                    <button
+                                                        onClick={() => {
+                                                            setModal({ dia, horario });
+                                                            setTipo(ag.tipo);
+                                                            setNomes(
+                                                                ag.aluno ||
+                                                                ag.alunos?.join(", ") ||
+                                                                ag.motivo ||
+                                                                ""
+                                                            );
+                                                        }}
+                                                        style={{
+                                                            flex: 1,
+                                                            background: "#ffffff",
+                                                            color: "#111",
+                                                            border: "none",
+                                                            padding: "6px",
+                                                            borderRadius: "6px",
+                                                            fontWeight: "bold",
+                                                            cursor: "pointer",
+                                                            transition: "0.2s"
+                                                        }}
+                                                        onMouseEnter={(e) => e.currentTarget.style.background = "#e5e7eb"}
+                                                        onMouseLeave={(e) => e.currentTarget.style.background = "#ffffff"}
+                                                    >
+                                                        Editar
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => excluir(`${dia}-${horario}`)}
+                                                        style={{
+                                                            flex: 1,
+                                                            background: "#111",
+                                                            color: "#fff",
+                                                            border: "none",
+                                                            padding: "6px",
+                                                            borderRadius: "6px",
+                                                            fontWeight: "bold",
+                                                            cursor: "pointer",
+                                                            transition: "0.2s"
+                                                        }}
+                                                        onMouseEnter={(e) => e.currentTarget.style.background = "#333"}
+                                                        onMouseLeave={(e) => e.currentTarget.style.background = "#111"}
+                                                    >
+                                                        Excluir
+                                                    </button>
+
+                                                </div>
+
+                                            </div>
+                                        )}
+
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ))}
+
+                </div>
+            )}
+
+            {/* MODAL BONITO */}
+            {modal && (
+                <div style={{
+                    position: "fixed",
+                    inset: 0,
+                    background: "rgba(0,0,0,0.6)",
+                    backdropFilter: "blur(4px)",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    zIndex: 999
+                }}>
+                    <div style={{
+                        background: dark ? "#1e293b" : "#fff",
+                        color: dark ? "#fff" : "#111",
+                        padding: "20px",
+                        borderRadius: "12px",
+                        width: "320px",
+                        boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "10px"
+                    }}>
+                        <h3 style={{ margin: 0 }}>
+                            {modal.dia} - {modal.horario}
+                        </h3>
+
+                        <select
+                            value={tipo}
+                            onChange={e => setTipo(e.target.value)}
+                            style={{
+                                padding: "8px",
+                                borderRadius: "6px",
+                                border: "1px solid #ccc"
+                            }}
+                        >
+                            <option value="turma">Turma</option>
+                            <option value="individual">Individual</option>
+                            <option value="outros">Indisponível</option>
+                        </select>
+
+                        <input
+                            value={nomes}
+                            onChange={e => setNomes(e.target.value)}
+                            placeholder="Nome(s)"
+                            style={{
+                                padding: "8px",
+                                borderRadius: "6px",
+                                border: "1px solid #ccc"
+                            }}
+                        />
+
+                        <div style={{ display: "flex", gap: "8px" }}>
+                            <button
+                                onClick={salvar}
+                                style={{
+                                    flex: 1,
+                                    background: "#2563eb",
+                                    color: "#fff",
+                                    border: "none",
+                                    padding: "10px",
+                                    borderRadius: "8px",
+                                    fontWeight: "bold",
+                                    cursor: "pointer"
+                                }}
+                            >
+                                Salvar
+                            </button>
+
+                            <button
+                                onClick={() => setModal(null)}
+                                style={{
+                                    flex: 1,
+                                    background: "#696969ff",
+                                    border: "none",
+                                    padding: "10px",
+                                    borderRadius: "8px",
+                                    cursor: "pointer"
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
-      )}
-
-    </div>
-  );
+    );
 }
