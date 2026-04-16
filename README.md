@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📅 Agenda de Aulas Online
 
-## Getting Started
+Aplicação web desenvolvida para gerenciamento de horários de aulas, permitindo organizar, bloquear e editar horários de forma simples e intuitiva.
 
-First, run the development server:
+🔗 **Acesse o projeto:** https://agenda-aulas.vercel.app/
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Funcionalidades
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### 👨‍🏫 Painel do Professor (Admin)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+* Visualização completa da agenda semanal
+* Separar horários por:
 
-## Learn More
+  * Turma
+  * Aula individual
+  * Indisponibilidade
+* Edição de horários ocupados
+* Exclusão de horários
+* Interface responsiva (desktop + mobile)
+* Modo escuro / claro 🌙☀️
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 👨‍🎓 Área do Aluno
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+* Visualização dos horários disponíveis
+* Agendamento de aulas
+* Inserção de nome e e-mail
+* Interface simples e intuitiva
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📱 Responsividade
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+O projeto foi pensado com **duas experiências diferentes**:
+
+* 💻 Desktop → grid completo de horários
+* 📱 Mobile → navegação por dias (UX otimizada)
+
+---
+
+## 🧠 Tecnologias utilizadas
+
+* React / Next.js
+* Firebase (Firestore)
+* JavaScript (ES6+)
+* CSS inline (estilização customizada)
+
+---
+
+## 🎯 Objetivo do Projeto
+
+Este projeto foi desenvolvido com foco em:
+
+* Prática de desenvolvimento fullstack
+* Construção de interfaces responsivas
+* Gerenciamento de estado em aplicações reais
+* Simulação de um produto utilizável no dia a dia
+
+---
+
+## 📈 Melhorias após feedback
+
+* Refinamento da interface (UI/UX)
+* Melhor experiência mobile
+* Adição de hover e feedback visual
+* Modal aprimorado
+* Melhor organização visual dos botões
+* Correções de usabilidade
+
+---
+
+## 📌 Próximos passos (em evolução)
+
+* Sistema de autenticação com níveis de acesso
+* Confirmação de ações (exclusão, edição)
+* Notificações (toast)
+* Dashboard com métricas de aulas
+
+---
+
+## 👨‍💻 Autor
+
+Desenvolvido por **Richard Gomes**
+
+---
+
+## ⭐ Observação
+
+Este projeto faz parte do meu portfólio e está em constante evolução. Feedbacks são sempre bem-vindos!
